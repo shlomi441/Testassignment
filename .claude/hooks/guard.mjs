@@ -1,11 +1,21 @@
 import { readFileSync } from 'node:fs';
 
 const QUOTED = /"[^"]*"|'[^']*'/g;
-// Only PowerShell has `@'...'@` here-strings, whose text may hold quote characters; in Bash `@'` is
-// plain text. Reading less as a here-string than PowerShell does is the safe side: what is not
-// stripped stays visible to the rules.
-const QUOTED_IN_POWERSHELL =
-  /(?<!\S)@'[ \t]*\r?\n[\s\S]*?[\r\n]'@|(?<!\S)@"[ \t]*\r?\n[\s\S]*?[\r\n]"@|"[^"]*"|'[^']*'/g;
+// PowerShell reads the curly quotes as quotes too, and only it has `@'...'@` here-strings, whose
+// text may hold quote characters; in Bash both are plain text. Where the pattern chooses, it reads
+// less as a string than PowerShell does, so the rest stays visible to the rules. It is no
+// tokenizer: a backtick escape, a comment or a `$(...)` inside a string is read as string text.
+const SINGLE = String.raw`'\u2018-\u201b`;
+const DOUBLE = String.raw`"\u201c-\u201e`;
+const QUOTED_IN_POWERSHELL = new RegExp(
+  [
+    String.raw`(?<!\S)@[${SINGLE}][ \t]*\r?\n[\s\S]*?[\r\n][${SINGLE}]@`,
+    String.raw`(?<!\S)@[${DOUBLE}][ \t]*\r?\n[\s\S]*?[\r\n][${DOUBLE}]@`,
+    `[${DOUBLE}][^${DOUBLE}]*[${DOUBLE}]`,
+    `[${SINGLE}][^${SINGLE}]*[${SINGLE}]`,
+  ].join('|'),
+  'g',
+);
 const SECRET_PATH = /(?<!\w)\.(ssh|aws|env)\b|\.pem\b|\bid_(ed25519|rsa)\b|\.tf(state|vars)\b/;
 
 export function withoutQuotes(command, tool) {

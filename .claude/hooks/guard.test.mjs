@@ -127,11 +127,29 @@ test('reads a PowerShell here-string only where PowerShell opens and closes one'
   const commands = [
     "write-output a@'\n'; terraform apply\n'@'",
     'write-output a@"\n"; terraform apply\n"@"',
-    "write-output @'\nx\r'@; terraform apply; write-output '\n'@",
-    'write-output @"\nx\r"@; terraform apply; write-output "\n"@',
+    "write-output @'\nx\r'@; terraform apply; write-output @'\n'@",
+    'write-output @"\nx\r"@; terraform apply; write-output @"\n"@',
   ];
   for (const command of commands) {
     assert.match(refusal(command, MAIN_CHECKOUT, 'PowerShell'), /^guard rule 1: /);
+  }
+});
+
+test('reads curly quotes as PowerShell does, so the command between them is still refused', () => {
+  const commands = [
+    ...['\u2018', '\u2019', '\u201a', '\u201b'].flatMap((quote) => [
+      `write-output 'a${quote}; terraform apply; write-output 'b'`,
+      `write-output ${quote}a'; terraform apply; write-output 'b${quote}`,
+    ]),
+    ...['\u201c', '\u201d', '\u201e'].flatMap((quote) => [
+      `write-output "a${quote}; terraform apply; write-output "b"`,
+      `write-output ${quote}a"; terraform apply; write-output "b${quote}`,
+    ]),
+    "write-output @'\nx\n\u2019@; terraform apply; write-output @'\n'@",
+    'write-output @"\nx\n\u201d@; terraform apply; write-output @"\n"@',
+  ];
+  for (const command of commands) {
+    assert.match(refusal(command, MAIN_CHECKOUT, 'PowerShell'), /^guard rule 1: /, JSON.stringify(command));
   }
 });
 

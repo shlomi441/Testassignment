@@ -18,7 +18,10 @@ export function readCommit(command, tool) {
   if (/\s(-[a-z]*a|--all\b)/.test(commit[2])) {
     return { refusal: 'commit -a or --all is refused: stage by path, then commit what is staged' };
   }
-  const [, options] = command.match(GIT_COMMIT);
+  const options = command.match(GIT_COMMIT)?.[1];
+  if (options === undefined) {
+    return { refusal: 'the options of this commit could not be read: quote them with plain quotes' };
+  }
   const directory = options.match(new RegExp(String.raw`-C\s+(${VALUE})`))?.[1].replace(/^(["'])(.*)\1$/, '$2');
   return { directory };
 }
