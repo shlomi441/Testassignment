@@ -4,7 +4,7 @@ import type { Request, Response } from "express";
 import { EventEmitter } from "node:events";
 import { requestLogger } from "./request-logger";
 
-const log = jest.spyOn(Logger.prototype, "log");
+const log = jest.spyOn(Logger.prototype, "log").mockReturnValue(undefined);
 const next = jest.fn();
 const getTasks = { method: "GET", originalUrl: "/tasks", path: "/tasks" };
 

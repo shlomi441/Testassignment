@@ -7,6 +7,7 @@ const log = jest.fn();
 let app: INestApplication;
 
 beforeEach(async () => {
+  jest.clearAllMocks();
   app = await createTestApp();
   app.useLogger({ log, error: jest.fn(), warn: jest.fn() });
 });
