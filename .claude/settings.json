@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "defaultMode": "plan",
+    "disableAutoMode": "disable",
+    "disableBypassPermissionsMode": "disable",
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm test *)",
+      "Bash(npm ci *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git rebase main)",
+      "Bash(git merge --ff-only *)",
+      "Bash(git worktree list *)",
+      "Bash(terraform fmt *)",
+      "Bash(terraform validate *)",
+      "Bash(gh run list *)",
+      "Bash(gh run view *)",
+      "Bash(gh run watch *)",
+      "PowerShell(npm run *)",
+      "PowerShell(npm test *)",
+      "PowerShell(npm ci *)",
+      "PowerShell(git status *)",
+      "PowerShell(git diff *)",
+      "PowerShell(git log *)",
+      "PowerShell(git add *)",
+      "PowerShell(git commit *)",
+      "PowerShell(git rebase main)",
+      "PowerShell(git merge --ff-only *)",
+      "PowerShell(git worktree list *)",
+      "PowerShell(terraform fmt *)",
+      "PowerShell(terraform validate *)",
+      "PowerShell(gh run list *)",
+      "PowerShell(gh run view *)",
+      "PowerShell(gh run watch *)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(npm install *)",
+      "Bash(npm i *)",
+      "Bash(npm add *)",
+      "Bash(npm update *)",
+      "Bash(npm uninstall *)",
+      "Bash(npm audit fix *)",
+      "Bash(npm exec *)",
+      "Bash(npx *)",
+      "Bash(terraform init *)",
+      "Bash(terraform plan *)",
+      "Bash(docker push *)",
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "Bash(curl *)",
+      "PowerShell(git push *)",
+      "PowerShell(npm install *)",
+      "PowerShell(npm i *)",
+      "PowerShell(npm add *)",
+      "PowerShell(npm update *)",
+      "PowerShell(npm uninstall *)",
+      "PowerShell(npm audit fix *)",
+      "PowerShell(npm exec *)",
+      "PowerShell(npx *)",
+      "PowerShell(terraform init *)",
+      "PowerShell(terraform plan *)",
+      "PowerShell(docker push *)",
+      "PowerShell(ssh *)",
+      "PowerShell(scp *)",
+      "PowerShell(curl *)",
+      "PowerShell(Invoke-WebRequest *)",
+      "PowerShell(Invoke-RestMethod *)"
+    ],
+    "deny": [
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Bash(terraform apply *)",
+      "Bash(terraform destroy *)",
+      "Bash(aws *)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git push --force-with-lease *)",
+      "Bash(gh secret *)",
+      "Bash(gh auth *)",
+      "PowerShell(terraform apply *)",
+      "PowerShell(terraform destroy *)",
+      "PowerShell(aws *)",
+      "PowerShell(git push --force *)",
+      "PowerShell(git push -f *)",
+      "PowerShell(git push --force-with-lease *)",
+      "PowerShell(gh secret *)",
+      "PowerShell(gh auth *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.mjs"], "onFailure": "block" },
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/commit-gate.mjs"], "onFailure": "block" }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          { "type": "command", "command": "node", "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/session-start.mjs"] }
+        ]
+      }
+    ]
+  },
+  "worktree": {
+    "baseRef": "head"
+  },
+  "outputStyle": "Explanatory",
+  "autoMemoryEnabled": false
+}

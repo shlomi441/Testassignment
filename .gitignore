@@ -1,0 +1,27 @@
+# Dependencies, build output, coverage
+node_modules/
+dist/
+coverage/
+backend/public/
+*.tsbuildinfo
+
+# Environment files and logs
+.env
+.env.*
+*.log
+
+# Terraform: local state and variable files stay on the machine.
+# The provider lock file, .terraform.lock.hcl, is committed.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# Claude Code: private local settings, and the worktrees of parallel sessions
+.claude/settings.local.json
+.claude/worktrees/
+
+# Editor and operating system
+.vscode/
+.DS_Store
+Thumbs.db
