@@ -14,11 +14,10 @@ export function useTasks() {
   });
   const { mutateAsync } = useMutation({
     mutationFn: createTask,
-    onSuccess: (task) =>
-      client.setQueryData<Task[]>(
-        ["tasks"],
-        (tasks) => tasks && [...tasks, task],
-      ),
+    onSuccess: (task) => {
+      if (client.getQueryState(["tasks"])?.status === "success")
+        client.setQueryData<Task[]>(["tasks"], (tasks) => [...tasks!, task]);
+    },
   });
   const state: TasksState =
     status === "pending"

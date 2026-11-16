@@ -136,6 +136,25 @@ test("an add while the load has failed keeps the error state", async () => {
   });
 });
 
+test("an add after a failed reload keeps the error state", async () => {
+  stubFetch()
+    .mockResolvedValueOnce(Response.json([task]))
+    .mockRejectedValueOnce(networkFailure)
+    .mockResolvedValueOnce(Response.json(created, { status: 201 }));
+  const result = renderUseTasks();
+  await settle();
+  fireEvent(document, new Event("visibilitychange", { bubbles: true }));
+  await settle();
+
+  await act(() => result.current.add("Ship it"));
+  await settle();
+
+  expect(result.current.state).toEqual({
+    status: "error",
+    reason: "Failed to fetch",
+  });
+});
+
 test("loads again when the tab regains focus, and shows the error state when that load fails", async () => {
   const fetchMock = stubFetch()
     .mockResolvedValueOnce(Response.json([task]))
