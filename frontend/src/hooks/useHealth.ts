@@ -8,7 +8,8 @@ export function useHealth(): HealthState {
     queryKey: ["health"],
     queryFn: getHealth,
     refetchInterval: 10_000,
+    select: (health) => (health.status === "ok" ? "up" : "down"),
   });
   if (status === "pending") return "checking";
-  return status === "success" && data.status === "ok" ? "up" : "down";
+  return status === "success" ? data : "down";
 }
