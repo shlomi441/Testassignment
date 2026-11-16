@@ -20,5 +20,5 @@
 .alert {
   flex-basis: 100%;
   margin: 0;
-  color: #b91c1c;
+  color: var(--color-danger);
 }

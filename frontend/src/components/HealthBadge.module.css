@@ -2,18 +2,18 @@
   display: inline-block;
   padding: 0.25rem 0.75rem;
   border-radius: 999px;
-  color: #fff;
+  color: var(--color-inverse);
   font-weight: 600;
 }
 
 .checking {
-  background: #4b5563;
+  background: var(--color-neutral);
 }
 
 .up {
-  background: #15803d;
+  background: var(--color-success);
 }
 
 .down {
-  background: #b91c1c;
+  background: var(--color-danger);
 }

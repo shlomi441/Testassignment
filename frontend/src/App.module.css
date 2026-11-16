@@ -1,0 +1,13 @@
+.page {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 0 1rem;
+  font-family: system-ui, sans-serif;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
