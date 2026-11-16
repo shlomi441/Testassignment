@@ -4,7 +4,7 @@ import { TasksService } from "./tasks.service";
 
 @Controller("tasks")
 export class TasksController {
-  constructor(private service: TasksService) {}
+  constructor(private readonly service: TasksService) {}
 
   @Get()
   async findAll() {
