@@ -27,7 +27,7 @@ Not used, each rejected for a recorded reason: the Nest CLI, `nest new` and `@ne
 - Removed in TypeScript 7 and hard errors now: `moduleResolution` `node`, `node10` and `classic`; `baseUrl`; `target` `es5`; `module` `amd`, `umd`, `system` and `none`; `downlevelIteration`.
 - NestJS needs `experimentalDecorators` and `emitDecoratorMetadata`. `erasableSyntaxOnly` cannot be combined with them.
 - `isolatedModules: true` makes `tsc` reject what a per-file compiler such as SWC cannot convert, so the two compilers stay in agreement. `target: es2024` matches what Node 24 runs.
-- Two files: `tsconfig.json` type-checks `src` and `test` with `noEmit`; `tsconfig.build.json` extends it, sets `rootDir: ./src` and `outDir: ./dist`, includes `src` and excludes `src/**/*.spec.ts`.
+- Two files: `tsconfig.json` type-checks `src` and `test` with `noEmit`, and takes in `smoke.mjs` through `allowJs` for the linter only: without `checkJs`, `tsc` reports no type error in it, so the TS2801 check below does not cover it. `tsconfig.build.json` extends it, sets `rootDir: ./src` and `outDir: ./dist`, includes `src` and excludes `src/**/*.spec.ts`.
 - Build: `tsc -p tsconfig.build.json`. Type-check: `tsc -p tsconfig.json`. Run: `node dist/main.js`. No flag is needed to run the built app.
 
 ## Jest
@@ -64,7 +64,7 @@ Not used, each rejected for a recorded reason: the Nest CLI, `nest new` and `@ne
 
 ## Lint and format
 
-- `oxlint --type-aware src test`. It needs the paths as arguments, and `oxlint-tsgolint` supplies the type-aware rules.
+- `oxlint --type-aware src test smoke.mjs`. It needs the paths as arguments, and `oxlint-tsgolint` supplies the type-aware rules. A type-aware rule reaches only files in the tsconfig program: a lint path alone, or an `include` entry without `allowJs`, leaves a `.mjs` file outside the type-aware rules, `typescript/no-floating-promises` among them, and prints nothing.
 - Under a coding agent oxlint prints nothing when it finds nothing. The exit code is the result.
 - Warnings do not fail the run. One rule is set to `error` in `.oxlintrc.json`: `typescript/no-floating-promises`. There is no `--deny-warnings`.
 - A promise used as a condition is reported by the compiler itself (TS2801), not by the linter.
