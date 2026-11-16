@@ -74,6 +74,19 @@ test('is "down" after a network failure', async () => {
   expect(result.current).toBe("down");
 });
 
+test('is "down" when a poll fails after a good answer', async () => {
+  const fetchMock = stubFetch(answerOk);
+  const result = renderUseHealth();
+  await advance(0);
+  expect(result.current).toBe("up");
+
+  fetchMock.mockRejectedValue(new TypeError("Failed to fetch"));
+  // The poll fires mid-advance, and the fake clock moves a 0 ms timer set then 1 ms on.
+  await advance(10_001);
+
+  expect(result.current).toBe("down");
+});
+
 test("asks again every 10 seconds", async () => {
   const fetchMock = stubFetch(answerOk);
   renderUseHealth();
