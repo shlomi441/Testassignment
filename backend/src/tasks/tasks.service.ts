@@ -4,7 +4,7 @@ import { TaskRepository } from "./task.repository";
 
 @Injectable()
 export class TasksService {
-  constructor(private repository: TaskRepository) {}
+  constructor(private readonly repository: TaskRepository) {}
 
   async create(title: string) {
     const task = {
