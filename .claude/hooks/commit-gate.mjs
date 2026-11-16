@@ -3,8 +3,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { withoutQuotes } from './guard.mjs';
 
-const VALUE = String.raw`(?:"[^"]*"|'[^']*'|[^\s"']+)`;
-const OPTION = String.raw`-c\s+${VALUE}|--?[\w-]+(?:=${VALUE})?`;
+const VALUE = String.raw`(?:[^\s"']|"[^"]*"|'[^']*')+`;
+const OPTION = String.raw`-c\s+${VALUE}|-${VALUE}`;
 const GIT_COMMIT = new RegExp(String.raw`\bgit(?:\.exe)?((?:\s+(?:${OPTION}))*)\s+commit\b(.*)`, 'i');
 const OUTPUT_LINES = 30;
 

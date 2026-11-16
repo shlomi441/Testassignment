@@ -38,7 +38,13 @@ test('finds a commit behind -C and -c options', () => {
 });
 
 test('finds a commit written as Git, git.exe or after a global option', () => {
-  const commands = ['Git commit -m x', 'git.exe commit -m x', 'git --no-pager commit -m x', 'git --git-dir=".git" commit -m x'];
+  const commands = [
+    'Git commit -m x',
+    'git.exe commit -m x',
+    'git --no-pager commit -m x',
+    'git --git-dir=".git" commit -m x',
+    'git -c user.name="A B" commit -m x',
+  ];
   for (const command of commands) {
     assert.deepEqual(readCommit(command), { directory: undefined });
   }

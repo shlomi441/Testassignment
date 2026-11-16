@@ -19,8 +19,8 @@ export function refusal(command, cwd) {
     ],
     [/(^|[;&|(])\s*aws\b/.test(bare), 'aws commands are run by the author only'],
     [SECRET_PATH.test(text), 'keys, .env files and Terraform state and variable files are never read'],
-    [/\bgit\b.*\bpush\b.*\s(--force|-[a-z]*f)/.test(bare), 'git push is never forced'],
-    [/\bgit\b.*\bcommit\b.*\s(--no-verify|-[a-z]*n)/.test(bare), 'git commit never skips its checks'],
+    [/\bgit\b[^;&|\n]*\bpush\b[^;&|\n]*\s(--force|-[a-z]*f)/.test(bare), 'git push is never forced'],
+    [/\bgit\b[^;&|\n]*\bcommit\b[^;&|\n]*\s(--no-verify|-[a-z]*n)/.test(bare), 'git commit never skips its checks'],
   ];
   const broken = rules.findIndex(([refused]) => refused);
   return broken === -1 ? null : `guard rule ${broken + 1}: ${rules[broken][1]}.`;

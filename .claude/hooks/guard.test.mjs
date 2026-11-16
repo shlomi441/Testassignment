@@ -101,6 +101,11 @@ test('allows a plain push', () => {
   assertAllowed('git push -u origin main');
 });
 
+test('reads a push or a commit only up to the next separator', () => {
+  assertAllowed('git push -u origin main 2>&1 | Select-Object -First 5');
+  assertAllowed('git commit -m "S9: probe" | Out-File -NoNewline commit.log');
+});
+
 test('refuses a commit that skips checks', () => {
   assertRefused('git commit --no-verify -m "S9: probe"', 6);
   assertRefused('git commit -n -m "S9: probe"', 6);
