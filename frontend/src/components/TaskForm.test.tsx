@@ -71,7 +71,7 @@ test("the input takes 200 characters at most", () => {
 test("after a successful add the input is empty", async () => {
   renderForm();
 
-  await submit("Write tests");
+  await submit("  Write tests  ");
 
   expect(input().value).toBe("");
 });
