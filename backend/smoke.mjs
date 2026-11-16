@@ -124,5 +124,5 @@ try {
   console.error(`smoke failed: ${error.message}`);
   process.exitCode = 1;
 } finally {
-  server?.kill();
+  server?.kill("SIGKILL");
 }
