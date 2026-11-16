@@ -176,3 +176,18 @@ test("loads again when the tab regains focus, and shows the error state when tha
     reason: "Internal server error",
   });
 });
+
+test("add posts even when the browser reports itself offline", async () => {
+  const fetchMock = stubFetch().mockResolvedValueOnce(Response.json([task]));
+  const result = renderUseTasks();
+  await settle();
+
+  fireEvent.offline(window);
+  void result.current.add("Ship it");
+  await settle();
+
+  expect(fetchMock).toHaveBeenLastCalledWith(
+    "/tasks",
+    expect.objectContaining({ method: "POST" }),
+  );
+});
