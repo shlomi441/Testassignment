@@ -50,6 +50,36 @@ test('finds a commit written as Git, git.exe or after a global option', () => {
   }
 });
 
+test('reads a PowerShell here-string message as one value, whatever quotes it holds', () => {
+  const commands = [
+    "git commit -m @'\nB4: readonly on the service's repository\n\nCo-Authored-By: probe\n'@",
+    'git commit -m @"\nO1: a 12" screen\nsecond line\n"@',
+    "git commit -m @'\r\nB4: the service's repository\r\n'@",
+    "git commit -m @' \t\nB4: the service's repository\n'@",
+    'git commit -m @" \t\r\nO1: a 12" screen\r\n"@',
+  ];
+  for (const command of commands) {
+    assert.deepEqual(readCommit(command, 'PowerShell'), { directory: undefined });
+  }
+});
+
+test('reads @ quotes as plain text in Bash, so a commit between them is still found', () => {
+  assert.deepEqual(readCommit("echo @'\n'; git commit -m x; echo '\n'@", 'Bash'), {
+    refusal: 'a git commit has to be a command of its own: finish staging, then commit',
+  });
+});
+
+test('lets a PowerShell commit with a here-string message through the hook', (t) => {
+  const repository = temporaryFolder(t);
+  git(repository, 'init');
+  writeFile(join(repository, 'README.md'), 'readme\n');
+  git(repository, 'add', 'README.md');
+  const command = "git commit -m @'\nS9: the author's probe\n'@";
+  const result = runHook('commit-gate.mjs', { tool_name: 'PowerShell', tool_input: { command }, cwd: repository });
+  assert.equal(result.status, 0);
+  assert.equal(contextOf(result), 'commit-gate passed: nothing to verify');
+});
+
 test('refuses a commit that is chained to another command', (t) => {
   const chained = [
     'git add a.txt; git commit -m x',

@@ -116,6 +116,29 @@ test('allows a commit whose message mentions the flag', () => {
   assertAllowed('git commit -m "S9: never use --no-verify"');
 });
 
+test('allows a PowerShell here-string message with an apostrophe that mentions the flag', () => {
+  const command = "git commit -m @'\nS9: don't use --no-verify\n'@";
+  assert.equal(refusal(command, MAIN_CHECKOUT, 'PowerShell'), null);
+  const { status } = runHook('guard.mjs', { tool_name: 'PowerShell', tool_input: { command }, cwd: MAIN_CHECKOUT });
+  assert.equal(status, 0);
+});
+
+test('reads a PowerShell here-string only where PowerShell opens and closes one', () => {
+  const commands = [
+    "write-output a@'\n'; terraform apply\n'@'",
+    'write-output a@"\n"; terraform apply\n"@"',
+    "write-output @'\nx\r'@; terraform apply; write-output '\n'@",
+    'write-output @"\nx\r"@; terraform apply; write-output "\n"@',
+  ];
+  for (const command of commands) {
+    assert.match(refusal(command, MAIN_CHECKOUT, 'PowerShell'), /^guard rule 1: /);
+  }
+});
+
+test('reads @ quotes as plain text in Bash, so the command between them is still refused', () => {
+  assert.match(refusal("echo @'\n'; terraform apply; echo '\n'@", MAIN_CHECKOUT, 'Bash'), /^guard rule 1: /);
+});
+
 test('allows an ordinary command', () => {
   assertAllowed('npm run verify');
   assertAllowed('npm run verify', WORKTREE);

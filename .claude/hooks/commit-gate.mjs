@@ -8,8 +8,8 @@ const OPTION = String.raw`-c\s+${VALUE}|-${VALUE}`;
 const GIT_COMMIT = new RegExp(String.raw`\bgit(?:\.exe)?((?:\s+(?:${OPTION}))*)\s+commit\b(.*)`, 'i');
 const OUTPUT_LINES = 30;
 
-export function readCommit(command) {
-  const bare = withoutQuotes(command);
+export function readCommit(command, tool) {
+  const bare = withoutQuotes(command, tool);
   const commit = bare.match(GIT_COMMIT);
   if (!commit) return null;
   if (/;|&&|\||\n/.test(bare)) {
@@ -37,8 +37,8 @@ function refuse(reason) {
   process.exitCode = 2;
 }
 
-function gate({ tool_input, cwd }) {
-  const commit = readCommit(tool_input.command);
+function gate({ tool_name, tool_input, cwd }) {
+  const commit = readCommit(tool_input.command, tool_name);
   if (!commit) return;
   if (commit.refusal) return refuse(commit.refusal);
   const git = (...args) =>
