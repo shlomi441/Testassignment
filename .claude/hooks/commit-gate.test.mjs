@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { checksFor, readCommit } from './commit-gate.mjs';
 import { git, runHook, temporaryFolder, writeFile } from './test-support.mjs';
 
@@ -12,8 +12,12 @@ function repositoryWithBackend(t, verifyScript) {
   return repository;
 }
 
-function runGate(cwd) {
-  return runHook('commit-gate.mjs', { tool_input: { command: 'git commit -m "S9: probe"' }, cwd });
+function runGate(cwd, command = 'git commit -m "S9: probe"') {
+  return runHook('commit-gate.mjs', { tool_input: { command }, cwd });
+}
+
+function contextOf(result) {
+  return JSON.parse(result.stdout).hookSpecificOutput.additionalContext;
 }
 
 test('passes a command that is not a commit', (t) => {
@@ -31,6 +35,13 @@ test('finds a commit behind -C and -c options', () => {
   assert.deepEqual(readCommit('git -C "../the lane" -c user.name=probe commit -m "S9: probe"'), {
     directory: '../the lane',
   });
+});
+
+test('finds a commit written as Git, git.exe or after a global option', () => {
+  const commands = ['Git commit -m x', 'git.exe commit -m x', 'git --no-pager commit -m x', 'git --git-dir=".git" commit -m x'];
+  for (const command of commands) {
+    assert.deepEqual(readCommit(command), { directory: undefined });
+  }
 });
 
 test('refuses a commit that is chained to another command', (t) => {
@@ -91,4 +102,20 @@ test('lets the commit pass and names what it verified', (t) => {
   };
   assert.equal(result.status, 0);
   assert.equal(result.stdout, `${JSON.stringify(expected)}\n`);
+});
+
+test('verifies the checkout that -C names', (t) => {
+  const repository = repositoryWithBackend(t, 'echo verified');
+  const result = runGate(dirname(repository), `git -C "${basename(repository)}" commit -m "S9: probe"`);
+  assert.equal(contextOf(result), 'commit-gate passed: npm run verify in ./backend');
+});
+
+test('lets a commit with nothing to verify pass and says so', (t) => {
+  const repository = temporaryFolder(t);
+  git(repository, 'init');
+  writeFile(join(repository, 'README.md'), 'readme\n');
+  git(repository, 'add', 'README.md');
+  const result = runGate(repository);
+  assert.equal(result.status, 0);
+  assert.equal(contextOf(result), 'commit-gate passed: nothing to verify');
 });

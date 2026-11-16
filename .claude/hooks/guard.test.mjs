@@ -88,7 +88,7 @@ test('allows process.env in a node command', () => {
 });
 
 test('refuses a forced push', () => {
-  for (const flag of ['--force', '-f', '--force-with-lease']) {
+  for (const flag of ['--force', '-f', '--force-with-lease', '-fu']) {
     assertRefused(`git push ${flag} origin main`, 5);
   }
 });
@@ -104,6 +104,7 @@ test('allows a plain push', () => {
 test('refuses a commit that skips checks', () => {
   assertRefused('git commit --no-verify -m "S9: probe"', 6);
   assertRefused('git commit -n -m "S9: probe"', 6);
+  assertRefused('git commit -nm "S9: probe"', 6);
 });
 
 test('allows a commit whose message mentions the flag', () => {

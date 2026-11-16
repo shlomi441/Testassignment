@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { withoutQuotes } from './guard.mjs';
 
 const VALUE = String.raw`(?:"[^"]*"|'[^']*'|[^\s"']+)`;
-const GIT_COMMIT = new RegExp(String.raw`\bgit((?:\s+-[cC]\s+${VALUE})*)\s+commit\b(.*)`);
+const OPTION = String.raw`-c\s+${VALUE}|--?[\w-]+(?:=${VALUE})?`;
+const GIT_COMMIT = new RegExp(String.raw`\bgit(?:\.exe)?((?:\s+(?:${OPTION}))*)\s+commit\b(.*)`, 'i');
 const OUTPUT_LINES = 30;
 
 export function readCommit(command) {
@@ -53,7 +54,7 @@ function gate({ tool_input, cwd }) {
     }
     passed.push(check);
   }
-  const additionalContext = `commit-gate passed: ${passed.join(', ')}`;
+  const additionalContext = `commit-gate passed: ${passed.join(', ') || 'nothing to verify'}`;
   console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext } }));
 }
 
