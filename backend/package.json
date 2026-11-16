@@ -5,7 +5,7 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "oxlint --type-aware src test",
+    "lint": "oxlint --type-aware src test smoke.mjs",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "build": "tsc -p tsconfig.build.json",
     "smoke": "node smoke.mjs",
