@@ -3,6 +3,8 @@ import { expect, test, vi } from "vitest";
 import { TaskForm } from "./TaskForm.tsx";
 
 const input = () => screen.getByLabelText<HTMLInputElement>("Title");
+const button = () =>
+  screen.getByRole<HTMLButtonElement>("button", { name: "Add" });
 const alertText = () => screen.queryByRole("alert")?.textContent;
 
 function renderForm(
@@ -14,10 +16,23 @@ function renderForm(
   return onAdd;
 }
 
+function renderWithAddInFlight() {
+  let succeed!: () => void;
+  let fail!: () => void;
+  const inFlight = new Promise((resolve, reject) => {
+    succeed = () => resolve(undefined);
+    fail = () => reject(new Error("Internal server error"));
+  });
+  const onAdd = renderForm(
+    vi.fn<(title: string) => Promise<unknown>>().mockReturnValue(inFlight),
+  );
+  return { onAdd, succeed, fail };
+}
+
 async function submit(title: string) {
   fireEvent.change(input(), { target: { value: title } });
   await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    fireEvent.click(button());
   });
 }
 
@@ -82,4 +97,33 @@ test("a valid submit removes an earlier message", async () => {
   await submit("Write tests");
 
   expect(alertText()).toBeUndefined();
+});
+
+test("submitting does not reload the page", () => {
+  renderForm();
+  fireEvent.change(input(), { target: { value: "Write tests" } });
+
+  expect(fireEvent.submit(input().form!)).toBe(false);
+});
+
+test("the Add button is disabled while an add is in flight, so a second click does not call onAdd, and enabled again when the add succeeds", async () => {
+  const { onAdd, succeed } = renderWithAddInFlight();
+  await submit("Write tests");
+  expect(button().disabled).toBe(true);
+
+  fireEvent.click(button());
+  expect(onAdd).toHaveBeenCalledOnce();
+
+  await act(async () => succeed());
+  expect(button().disabled).toBe(false);
+});
+
+test("the Add button is enabled again when the add fails", async () => {
+  const { fail } = renderWithAddInFlight();
+  await submit("Write tests");
+  expect(button().disabled).toBe(true);
+
+  await act(async () => fail());
+
+  expect(button().disabled).toBe(false);
 });

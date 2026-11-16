@@ -8,6 +8,7 @@ export function TaskForm({
 }) {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
+  const [adding, setAdding] = useState(false);
 
   async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -17,11 +18,14 @@ export function TaskForm({
       return;
     }
     setMessage("");
+    setAdding(true);
     try {
       await onAdd(trimmed);
       setTitle("");
     } catch (error) {
       setMessage(`Could not add the task: ${(error as Error).message}`);
+    } finally {
+      setAdding(false);
     }
   }
 
@@ -35,7 +39,7 @@ export function TaskForm({
           onChange={(event) => setTitle(event.target.value)}
         />
       </label>
-      <button>Add</button>
+      <button disabled={adding}>Add</button>
       {message && (
         <p role="alert" className={styles.alert}>
           {message}
