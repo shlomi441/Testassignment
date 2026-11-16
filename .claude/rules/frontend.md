@@ -25,7 +25,7 @@ Not used: the `npm create vite` scaffold (the files are hand-written from the of
 - `tsconfig.node.json` covers `vite.config.ts` with `module` nodenext and `types` `["node"]`.
 - `vite.config.ts` imports `defineConfig` from `vitest/config`, uses the React plugin, forwards `/tasks` and `/health` to `http://localhost:3000` in the dev server, and sets `test: { environment: 'jsdom', setupFiles: ['src/test-setup.ts'] }`.
 - The page and the API share one origin. Every request URL is relative.
-- The build writes `dist/`: `index.html`, the favicon, and one hashed JavaScript file and one hashed stylesheet under `assets/`. The API's container serves that folder at `/`, so no file in the build output may be named `health` or `tasks`: those paths belong to the API.
+- The build writes `dist/`: `index.html`, and one hashed JavaScript file and one hashed stylesheet under `assets/`. There is no favicon. The API's container serves that folder at `/`, so no file in the build output may be named `health` or `tasks`: those paths belong to the API.
 
 ## Lint
 
@@ -53,7 +53,7 @@ Not used: the `npm create vite` scaffold (the files are hand-written from the of
 - Testing Library does not unmount between tests under Vitest. `src/test-setup.ts` calls `afterEach(cleanup)`.
 - Replace `fetch` with `vi.stubGlobal` and real `Response` objects. Use `fireEvent`.
 - Every hook test gets a fresh client from `createQueryClient()` through a wrapper, so no cached data leaks between tests.
-- With fake timers: advance with `await act(() => vi.advanceTimersByTimeAsync(ms))` and wait with `vi.waitFor`. Testing Library's `waitFor` hangs under fake timers. A state change may need one more timer tick after a mocked fetch has resolved.
+- With fake timers: advance with `await act(() => vi.advanceTimersByTimeAsync(ms))` and wait with `vi.waitFor`. Testing Library's `waitFor` hangs under fake timers. TanStack Query delivers a state change through `setTimeout(cb, 0)`, and Vitest's fake clock schedules a zero-delay timer created during an advance at now + 1 ms. An advance that ends exactly when a fetch settles stops 1 ms short of the notification: advance 1 ms past that moment (`1_001`, `10_001`).
 - Tests are written first for the parts that hold logic: `api.ts`, the two hooks, the form's validation and the list's states. There is no coverage gate. Layout and CSS are checked by hand at desktop and mobile widths.
 
 ## Styles
