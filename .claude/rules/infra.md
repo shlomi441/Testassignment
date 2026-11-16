@@ -28,7 +28,7 @@ Checked against live sources on 2026-11-11. None of this had been run when it wa
 
 - Terraform on the 1.17 line and the AWS provider on 6.x (1.17.2 and 6.72.0 were the newest on 2026-11-11). `.terraform.lock.hcl` is committed. State files, `.terraform/` and `*.tfvars` are gitignored. State is a local file.
 - One root module in `infra/`: `versions.tf`, `main.tf`, `variables.tf`, `outputs.tf`, `user-data.sh`. No child modules. About 90 lines of HCL.
-- No VPC is named: the account's default VPC is used. If the account has none, `plan` fails at once and that is a stop-and-ask.
+- No VPC is named: the account's default VPC is used. If the account has none, `plan` does not notice, because nothing in the code looks up a VPC. `apply` then fails at the security group, after the key pair is created. That is a stop-and-ask.
 - The image comes from AWS's public parameter `/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64`. The instance sets `ignore_changes = [ami]`, or every new Amazon Linux image would replace the live instance.
 - Instance: `t3.micro`; `credit_specification { cpu_credits = "standard" }` (T3 launches as `unlimited` by default); `metadata_options { http_tokens = "required" }`; `root_block_device { encrypted = true }`; `user_data_replace_on_change = true`.
 - `aws_key_pair` takes an existing public key file. The private key never enters the repository or the state.
@@ -57,7 +57,7 @@ Checked against live sources on 2026-11-11. None of this had been run when it wa
 - `verify`: `npm run setup`, `npm run verify`, then `npm audit --omit=dev --audit-level=high` in both packages.
 - `image`: build, start the container on the runner, run the smoke script against it, stop it and check that it stopped on its own, log in with the built-in token, push with the commit SHA as the tag.
 - The registry is GitHub Container Registry. The image path `ghcr.io/<owner>/<repo>` must be lower case; the workflow reads the names from GitHub's own variables and lower-cases the path itself. A new package starts private, even from a public repository, and no API call changes that.
-- `deploy`: `environment: production` (it holds the secret; environments are free only on public repositories), a `concurrency` group without cancellation, plain `ssh` with the pinned host key and strict host key checking, `infra/deploy.sh` sent over SSH, then the smoke script against the public address.
+- `deploy`: `environment: prod` (it holds the secret; environments are free only on public repositories), a `concurrency` group without cancellation, plain `ssh` with the pinned host key and strict host key checking, `infra/deploy.sh` sent over SSH, then the smoke script against the public address.
 - Terraform checks are local only: `npm run verify:infra`.
 
 ## Deploy script and line endings

@@ -4,6 +4,7 @@
     "setup": "npm --prefix backend ci && npm --prefix frontend ci",
     "test": "npm --prefix backend test && npm --prefix frontend test",
     "test:hooks": "node --test \".claude/hooks/*.test.mjs\"",
-    "verify": "npm run test:hooks && npm --prefix backend run verify && npm --prefix frontend run verify"
+    "verify": "npm run test:hooks && npm --prefix backend run verify && npm --prefix frontend run verify",
+    "verify:infra": "terraform -chdir=infra fmt -check && terraform -chdir=infra validate"
   }
 }
