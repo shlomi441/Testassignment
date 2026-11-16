@@ -1,30 +1,15 @@
 import { readFileSync } from 'node:fs';
 
 const QUOTED = /"[^"]*"|'[^']*'/g;
-// PowerShell reads the curly quotes as quotes too, and only it has `@'...'@` here-strings, whose
-// text may hold quote characters; in Bash both are plain text. Where the pattern chooses, it reads
-// less as a string than PowerShell does, so the rest stays visible to the rules. It is no
-// tokenizer: a backtick escape, a comment or a `$(...)` inside a string is read as string text.
-const SINGLE = String.raw`'\u2018-\u201b`;
-const DOUBLE = String.raw`"\u201c-\u201e`;
-const QUOTED_IN_POWERSHELL = new RegExp(
-  [
-    String.raw`(?<!\S)@[${SINGLE}][ \t]*\r?\n[\s\S]*?[\r\n][${SINGLE}]@`,
-    String.raw`(?<!\S)@[${DOUBLE}][ \t]*\r?\n[\s\S]*?[\r\n][${DOUBLE}]@`,
-    `[${DOUBLE}][^${DOUBLE}]*[${DOUBLE}]`,
-    `[${SINGLE}][^${SINGLE}]*[${SINGLE}]`,
-  ].join('|'),
-  'g',
-);
 const SECRET_PATH = /(?<!\w)\.(ssh|aws|env)\b|\.pem\b|\bid_(ed25519|rsa)\b|\.tf(state|vars)\b/;
 
-export function withoutQuotes(command, tool) {
-  return command.replace(tool === 'PowerShell' ? QUOTED_IN_POWERSHELL : QUOTED, '""');
+export function withoutQuotes(command) {
+  return command.replace(QUOTED, '""');
 }
 
-export function refusal(command, cwd, tool) {
+export function refusal(command, cwd) {
   const text = command.toLowerCase();
-  const bare = withoutQuotes(text, tool);
+  const bare = withoutQuotes(text);
   const inWorktree = /[\\/]\.claude[\\/]worktrees[\\/]/.test(cwd);
   const rules = [
     [/\bterraform\b.*\b(apply|destroy)\b/.test(bare), 'terraform apply and destroy are run by the author only'],
@@ -42,8 +27,8 @@ export function refusal(command, cwd, tool) {
 }
 
 if (import.meta.main) {
-  const { tool_name, tool_input, cwd } = JSON.parse(readFileSync(0, 'utf8'));
-  const reason = refusal(tool_input.command, cwd, tool_name);
+  const { tool_input, cwd } = JSON.parse(readFileSync(0, 'utf8'));
+  const reason = refusal(tool_input.command, cwd);
   if (reason) {
     console.error(reason);
     process.exitCode = 2;

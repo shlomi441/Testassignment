@@ -8,8 +8,8 @@ const OPTION = String.raw`-c\s+${VALUE}|-${VALUE}`;
 const GIT_COMMIT = new RegExp(String.raw`\bgit(?:\.exe)?((?:\s+(?:${OPTION}))*)\s+commit\b(.*)`, 'i');
 const OUTPUT_LINES = 30;
 
-export function readCommit(command, tool) {
-  const bare = withoutQuotes(command, tool);
+export function readCommit(command) {
+  const bare = withoutQuotes(command);
   const commit = bare.match(GIT_COMMIT);
   if (!commit) return null;
   if (/;|&&|\||\n/.test(bare)) {
@@ -18,10 +18,7 @@ export function readCommit(command, tool) {
   if (/\s(-[a-z]*a|--all\b)/.test(commit[2])) {
     return { refusal: 'commit -a or --all is refused: stage by path, then commit what is staged' };
   }
-  const options = command.match(GIT_COMMIT)?.[1];
-  if (options === undefined) {
-    return { refusal: 'the options of this commit could not be read: quote them with plain quotes' };
-  }
+  const [, options] = command.match(GIT_COMMIT);
   const directory = options.match(new RegExp(String.raw`-C\s+(${VALUE})`))?.[1].replace(/^(["'])(.*)\1$/, '$2');
   return { directory };
 }
@@ -40,8 +37,8 @@ function refuse(reason) {
   process.exitCode = 2;
 }
 
-function gate({ tool_name, tool_input, cwd }) {
-  const commit = readCommit(tool_input.command, tool_name);
+function gate({ tool_input, cwd }) {
+  const commit = readCommit(tool_input.command);
   if (!commit) return;
   if (commit.refusal) return refuse(commit.refusal);
   const git = (...args) =>
