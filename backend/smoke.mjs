@@ -87,15 +87,6 @@ try {
     return status === 200 && Array.isArray(JSON.parse(text));
   });
   await check(
-    "POST /tasks with a title answers 201, and the task is in the next GET /tasks",
-    async () => {
-      const created = await post({ title: "smoke test" });
-      const { id } = JSON.parse(created.text);
-      const tasks = JSON.parse((await request("/tasks")).text);
-      return created.status === 201 && tasks.some((task) => task.id === id);
-    },
-  );
-  await check(
     "POST /tasks without a title answers 400",
     async () => (await post({})).status === 400,
   );
@@ -108,6 +99,15 @@ try {
     return status === 400;
   });
   if (server) {
+    await check(
+      "POST /tasks with a title answers 201, and the task is in the next GET /tasks",
+      async () => {
+        const created = await post({ title: "smoke test" });
+        const { id } = JSON.parse(created.text);
+        const tasks = JSON.parse((await request("/tasks")).text);
+        return created.status === 201 && tasks.some((task) => task.id === id);
+      },
+    );
     await check("the server wrote one JSON log line per request", () =>
       waitFor(async () => httpLogLines().length === responses.length, 2000),
     );
