@@ -1,3 +1,4 @@
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import { Test } from "@nestjs/testing";
 import { AppModule } from "../src/app.module";
 import { configureApp } from "../src/configure-app";
@@ -9,7 +10,7 @@ export async function createTestApp(repository?: TaskRepository) {
     builder.overrideProvider(TaskRepository).useValue(repository);
   }
   const moduleRef = await builder.compile();
-  const app = moduleRef.createNestApplication();
+  const app = moduleRef.createNestApplication<NestExpressApplication>();
   configureApp(app);
   await app.init();
   return app;

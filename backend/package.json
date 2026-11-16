@@ -8,7 +8,8 @@
     "lint": "oxlint --type-aware src test",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "build": "tsc -p tsconfig.build.json",
-    "verify": "npm run format:check && npm run lint && tsc -p tsconfig.json && npm test && npm run build"
+    "smoke": "node smoke.mjs",
+    "verify": "npm run format:check && npm run lint && tsc -p tsconfig.json && npm test && npm run build && npm run smoke"
   },
   "dependencies": {
     "@nestjs/common": "12.4.2",
