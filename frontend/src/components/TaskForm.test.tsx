@@ -127,3 +127,13 @@ test("the Add button is enabled again when the add fails", async () => {
 
   expect(button().disabled).toBe(false);
 });
+
+test("text typed while an add is in flight stays after the add succeeds", async () => {
+  const { succeed } = renderWithAddInFlight();
+  await submit("Write tests");
+  fireEvent.change(input(), { target: { value: "Ship it" } });
+
+  await act(async () => succeed());
+
+  expect(input().value).toBe("Ship it");
+});

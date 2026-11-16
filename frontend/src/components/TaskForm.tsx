@@ -21,7 +21,7 @@ export function TaskForm({
     setAdding(true);
     try {
       await onAdd(trimmed);
-      setTitle("");
+      setTitle((current) => (current === title ? "" : current));
     } catch (error) {
       setMessage(`Could not add the task: ${(error as Error).message}`);
     } finally {
