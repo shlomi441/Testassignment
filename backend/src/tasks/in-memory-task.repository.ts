@@ -1,7 +1,7 @@
 import { type Task, TaskRepository } from "./task.repository";
 
 export class InMemoryTaskRepository extends TaskRepository {
-  private tasks: Task[] = [];
+  private readonly tasks: Task[] = [];
 
   async create(task: Task) {
     this.tasks.push({ ...task });
