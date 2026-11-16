@@ -169,6 +169,8 @@ test("an add while the list is still loading resolves and leaves the list to the
   await expect(act(() => result.current.add("Ship it"))).resolves.toEqual(
     created,
   );
+  await settle();
+  expect(result.current.state).toEqual({ status: "loading" });
   await act(() => vi.advanceTimersByTimeAsync(1_001));
 
   expect(result.current.state).toEqual({ status: "ready", tasks: [task] });
