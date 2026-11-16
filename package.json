@@ -1,7 +1,9 @@
 {
   "private": true,
   "scripts": {
+    "setup": "npm --prefix backend ci",
+    "test": "npm --prefix backend test",
     "test:hooks": "node --test \".claude/hooks/*.test.mjs\"",
-    "verify": "npm run test:hooks"
+    "verify": "npm run test:hooks && npm --prefix backend run verify"
   }
 }
