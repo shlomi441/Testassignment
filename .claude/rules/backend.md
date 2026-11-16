@@ -27,7 +27,7 @@ Not used, each rejected for a recorded reason: the Nest CLI, `nest new` and `@ne
 - Removed in TypeScript 7 and hard errors now: `moduleResolution` `node`, `node10` and `classic`; `baseUrl`; `target` `es5`; `module` `amd`, `umd`, `system` and `none`; `downlevelIteration`.
 - NestJS needs `experimentalDecorators` and `emitDecoratorMetadata`. `erasableSyntaxOnly` cannot be combined with them.
 - `isolatedModules: true` makes `tsc` reject what a per-file compiler such as SWC cannot convert, so the two compilers stay in agreement. `target: es2024` matches what Node 24 runs.
-- Two files: `tsconfig.json` type-checks `src` and `test` with `noEmit`, and takes in `smoke.mjs` through `allowJs` for the linter only: without `checkJs`, `tsc` reports no type error in it, so the TS2801 check below does not cover it. `tsconfig.build.json` extends it, sets `rootDir: ./src` and `outDir: ./dist`, includes `src` and excludes `src/**/*.spec.ts`.
+- Two files: `tsconfig.json` type-checks `src` and `test` with `noEmit`, and takes in `smoke.mjs` through `allowJs` for the linter only: without `checkJs`, `tsc` reports no type error in it, so the TS2801 check below does not cover it. `tsconfig.build.json` extends it, sets `allowJs: false`, `rootDir: ./src` and `outDir: ./dist`, includes `src` and excludes `src/**/*.spec.ts`, so the build takes TypeScript only.
 - Build: `tsc -p tsconfig.build.json`. Type-check: `tsc -p tsconfig.json`. Run: `node dist/main.js`. No flag is needed to run the built app.
 
 ## Jest
