@@ -1,17 +1,12 @@
 import { beforeEach, expect, it, jest } from "@jest/globals";
 import type { INestApplication } from "@nestjs/common";
-import { Test } from "@nestjs/testing";
 import request from "supertest";
-import { AppModule } from "../src/app.module";
+import { createTestApp } from "./create-test-app";
 
 let app: INestApplication;
 
 beforeEach(async () => {
-  const moduleRef = await Test.createTestingModule({
-    imports: [AppModule],
-  }).compile();
-  app = moduleRef.createNestApplication();
-  await app.init();
+  app = await createTestApp();
 });
 
 it('GET /health answers 200 with status "ok" and a numeric uptime', async () => {
