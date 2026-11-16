@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, fireEvent, renderHook } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
 import { createWrapper } from "../test-wrapper.tsx";
 import { useHealth } from "./useHealth.ts";
@@ -23,7 +23,7 @@ const advance = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
 
 function setVisibility(state: DocumentVisibilityState) {
   vi.spyOn(document, "visibilityState", "get").mockReturnValue(state);
-  document.dispatchEvent(new Event("visibilitychange", { bubbles: true }));
+  fireEvent(document, new Event("visibilitychange", { bubbles: true }));
 }
 
 test('is "checking" before the first answer', () => {
@@ -105,7 +105,7 @@ test("asks even when the browser reports itself offline", async () => {
   renderUseHealth();
   await advance(0);
 
-  window.dispatchEvent(new Event("offline"));
+  fireEvent.offline(window);
   await advance(10_000);
   expect(fetchMock).toHaveBeenCalledTimes(2);
 });
