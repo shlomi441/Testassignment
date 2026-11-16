@@ -6,6 +6,7 @@ import { configureApp } from "./configure-app";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bodyParser: false,
     logger: new ConsoleLogger({ json: true }),
   });
   app.enableShutdownHooks();

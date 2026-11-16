@@ -99,6 +99,14 @@ try {
     "POST /tasks without a title answers 400",
     async () => (await post({})).status === 400,
   );
+  await check("POST /tasks with a form body answers 400", async () => {
+    const { status } = await request("/tasks", {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: "title=smoke+test",
+    });
+    return status === 400;
+  });
   if (server) {
     await check("the server wrote one JSON log line per request", () =>
       waitFor(async () => httpLogLines().length === responses.length, 2000),

@@ -10,7 +10,9 @@ export async function createTestApp(repository?: TaskRepository) {
     builder.overrideProvider(TaskRepository).useValue(repository);
   }
   const moduleRef = await builder.compile();
-  const app = moduleRef.createNestApplication<NestExpressApplication>();
+  const app = moduleRef.createNestApplication<NestExpressApplication>({
+    bodyParser: false,
+  });
   configureApp(app);
   await app.init();
   return app;

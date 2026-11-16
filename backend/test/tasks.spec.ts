@@ -92,6 +92,21 @@ it("POST /tasks with a body that is not JSON answers 400", async () => {
   expect(response.status).toBe(400);
 });
 
+it("POST /tasks with a form-encoded body answers 400 and stores nothing", async () => {
+  const response = await request(app.getHttpServer())
+    .post("/tasks")
+    .type("form")
+    .send({ title: "Buy milk" });
+
+  expect(response.status).toBe(400);
+  expect(response.body).toEqual({
+    statusCode: 400,
+    message: "title is required and must be a string",
+    error: "Bad Request",
+  });
+  expect(create).not.toHaveBeenCalled();
+});
+
 it("an unknown path answers 404", async () => {
   const response = await request(app.getHttpServer()).get("/nope");
 

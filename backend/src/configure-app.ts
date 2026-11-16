@@ -6,4 +6,5 @@ export function configureApp(app: NestExpressApplication) {
   app.use(requestLogger);
   app.disable("x-powered-by");
   app.useStaticAssets(join(__dirname, "..", "public"));
+  app.useBodyParser("json");
 }
