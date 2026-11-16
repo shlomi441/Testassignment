@@ -155,6 +155,25 @@ test("an add after a failed reload keeps the error state", async () => {
   });
 });
 
+test("an add while the list is still loading resolves and leaves the list to the load", async () => {
+  stubFetch()
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(() => resolve(Response.json([task])), 1_000),
+        ),
+    )
+    .mockResolvedValueOnce(Response.json(created, { status: 201 }));
+  const result = renderUseTasks();
+
+  await expect(act(() => result.current.add("Ship it"))).resolves.toEqual(
+    created,
+  );
+  await act(() => vi.advanceTimersByTimeAsync(1_001));
+
+  expect(result.current.state).toEqual({ status: "ready", tasks: [task] });
+});
+
 test("loads again when the tab regains focus, and shows the error state when that load fails", async () => {
   const fetchMock = stubFetch()
     .mockResolvedValueOnce(Response.json([task]))
