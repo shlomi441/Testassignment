@@ -87,6 +87,21 @@ test('is "down" when a poll fails after a good answer', async () => {
   expect(result.current).toBe("down");
 });
 
+test('stays "down" while a poll after a failed first check waits for its answer', async () => {
+  const fetchMock = stubFetch(() =>
+    Promise.reject(new TypeError("Failed to fetch")),
+  );
+  const result = renderUseHealth();
+  await advance(0);
+  expect(result.current).toBe("down");
+
+  fetchMock.mockImplementation(() => new Promise(() => {}));
+  await advance(10_001);
+
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  expect(result.current).toBe("down");
+});
+
 test("asks again every 10 seconds", async () => {
   const fetchMock = stubFetch(answerOk);
   renderUseHealth();
