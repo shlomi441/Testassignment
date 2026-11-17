@@ -1,26 +1,28 @@
 import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { withoutQuotes } from './guard.mjs';
+import { readCommands, readGit } from './read-command.mjs';
 
-const VALUE = String.raw`(?:[^\s"']|"[^"]*"|'[^']*')+`;
-const OPTION = String.raw`-c\s+${VALUE}|-${VALUE}`;
-const GIT_COMMIT = new RegExp(String.raw`\bgit(?:\.exe)?((?:\s+(?:${OPTION}))*)\s+commit\b(.*)`, 'i');
+const NAMES_A_COMMIT = /\bgit\b[\s\S]*\bcommit\b/i;
 const OUTPUT_LINES = 30;
 
-export function readCommit(command) {
-  const bare = withoutQuotes(command);
-  const commit = bare.match(GIT_COMMIT);
-  if (!commit) return null;
-  if (/;|&&|\||\n/.test(bare)) {
+export function readCommit(command, shell) {
+  const commands = readCommands(command, shell);
+  if (!commands) {
+    if (!NAMES_A_COMMIT.test(command)) return null;
+    return { refusal: 'the commit gate could not read this command: write the commit as one plain git commit' };
+  }
+  const commits = commands.map(readGit).filter((git) => git?.commit);
+  if (commits.length === 0) return null;
+  if (commands.length > 1) {
     return { refusal: 'a git commit has to be a command of its own: finish staging, then commit' };
   }
-  if (/\s(-[a-z]*a|--all\b)/.test(commit[2])) {
+  const [commit] = commits;
+  if (commit.at !== 0) return { refusal: 'a git commit has to start the command: drop what stands before git' };
+  if (commit.options.some((word) => /^(-[a-z]*a|--all\b)/.test(word))) {
     return { refusal: 'commit -a or --all is refused: stage by path, then commit what is staged' };
   }
-  const [, options] = command.match(GIT_COMMIT);
-  const directory = options.match(new RegExp(String.raw`-C\s+(${VALUE})`))?.[1].replace(/^(["'])(.*)\1$/, '$2');
-  return { directory };
+  return { location: commit.location };
 }
 
 export function checksFor(staged, top) {
@@ -37,13 +39,14 @@ function refuse(reason) {
   process.exitCode = 2;
 }
 
-function gate({ tool_input, cwd }) {
-  const commit = readCommit(tool_input.command);
+function gate({ tool_name, tool_input, cwd }) {
+  const commit = readCommit(tool_input.command, tool_name);
   if (!commit) return;
   if (commit.refusal) return refuse(commit.refusal);
   const git = (...args) =>
-    spawnSync('git', ['-C', commit.directory ?? '.', ...args], { cwd, encoding: 'utf8' }).stdout.trim();
+    spawnSync('git', [...commit.location, ...args], { cwd, encoding: 'utf8' }).stdout.trim();
   const top = git('rev-parse', '--show-toplevel');
+  if (!top) return refuse('the checkout of this commit could not be found: check the folder it runs in or that -C names');
   const passed = [];
   for (const { folder, script } of checksFor(git('diff', '--cached', '--name-only').split('\n'), top)) {
     const check = `npm run ${script} in ./${folder}`;
