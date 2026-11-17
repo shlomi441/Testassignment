@@ -47,7 +47,7 @@ Checked against live sources on 2026-11-11. None of this had been run when it wa
 - No `HEALTHCHECK` and no init process.
 - `.dockerignore` is an allow-list: ignore everything, then re-include `backend/` and `frontend/` without their `node_modules`, `dist`, `coverage` and `*.tsbuildinfo`. The image is public.
 - A graceful stop ends with exit code 0. A check after `docker stop` looks for "not 137".
-- Docker Desktop 4.80 (Engine 29.6.1) on the development machine gives every container a stop timeout of 1 second, not Docker's usual 10; the source was not found. The exec-form image stops in under half a second there. On GitHub's `ubuntu-24.04` runner, `docker stop` returned in about 0.15 s (run `44110219706`).
+- Docker Desktop 4.80 (Engine 29.6.1) on the development machine gives every container a stop timeout of 1 second, not Docker's usual 10; the source was not found. The exec-form image stops in under half a second there. On GitHub's `ubuntu-24.04` runner, `docker stop` returned in about 0.15 s (run `44110219706`). On the instance, about 0.4 s, read from the deploy log's timestamps (run `44138423260`).
 
 ## Pipeline
 
