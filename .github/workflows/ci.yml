@@ -30,9 +30,12 @@ jobs:
     permissions:
       contents: read
       packages: write
+    outputs:
+      image: ${{ steps.name.outputs.IMAGE }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}:$GITHUB_SHA" >> "$GITHUB_ENV"
+      - id: name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}:$GITHUB_SHA" | tee -a "$GITHUB_ENV" "$GITHUB_OUTPUT"
       - run: docker build -t "$IMAGE" .
       - run: docker run -d --name tasks -p 3000:3000 "$IMAGE"
       - run: npm run smoke -- http://localhost:3000
@@ -44,3 +47,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: docker push "$IMAGE"
+
+  deploy:
+    needs: image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: prod
+    concurrency:
+      group: deploy
+    env:
+      IMAGE: ${{ needs.image.outputs.image }}
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: |
+          umask 077
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          echo "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+      - run: ssh -o StrictHostKeyChecking=yes "ec2-user@$DEPLOY_HOST" "sudo bash -s -- $IMAGE" < infra/deploy.sh
+      - run: npm run smoke -- "http://$DEPLOY_HOST"
+        working-directory: backend

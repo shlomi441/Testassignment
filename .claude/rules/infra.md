@@ -13,7 +13,7 @@ Checked against live sources on 2026-11-11. None of this had been run when it wa
 ## Who runs what
 
 - You write the files and run `terraform fmt`, `terraform validate` and, after asking, `terraform init` and `terraform plan`.
-- The author runs `aws login`, `ssh-keygen`, `terraform apply` and `terraform destroy`, reads every plan before typing yes, enters the secret and the two variables in GitHub, and switches the registry package to public.
+- The author runs `aws login`, `ssh-keygen`, `terraform apply` and `terraform destroy`, reads every plan before typing yes, and enters the secret and the two variables in GitHub.
 - You never read `~/.ssh` or `~/.aws`, never run an `aws` command and never print a secret. `terraform plan` can still work, because the provider reads the AWS session in its own process.
 - Terraform runs only in the main checkout, never in a worktree: the state file lives in `infra/` there and nowhere else.
 
@@ -47,7 +47,7 @@ Checked against live sources on 2026-11-11. None of this had been run when it wa
 - No `HEALTHCHECK` and no init process.
 - `.dockerignore` is an allow-list: ignore everything, then re-include `backend/` and `frontend/` without their `node_modules`, `dist`, `coverage` and `*.tsbuildinfo`. The image is public.
 - A graceful stop ends with exit code 0. A check after `docker stop` looks for "not 137".
-- Docker Desktop 4.80 (Engine 29.6.1) on the development machine gives every container a stop timeout of 1 second, not Docker's usual 10; the source was not found. The exec-form image stops in under half a second there.
+- Docker Desktop 4.80 (Engine 29.6.1) on the development machine gives every container a stop timeout of 1 second, not Docker's usual 10; the source was not found. The exec-form image stops in under half a second there. On GitHub's `ubuntu-24.04` runner, `docker stop` returned in about 0.15 s (run `44110219706`).
 
 ## Pipeline
 
@@ -58,7 +58,7 @@ Checked against live sources on 2026-11-11. None of this had been run when it wa
 - `permissions: contents: read` for the workflow; `packages: write` only in the `image` job.
 - `verify`: `npm run setup`, `npm run verify`, then `npm audit --omit=dev --audit-level=high` in both packages.
 - `image`: build, start the container on the runner, run the smoke script against it, stop it and check that it stopped on its own, log in with the built-in token, push with the commit SHA as the tag. The smoke script runs on the runner's own Node, without `setup-node`: it is only the HTTP client and imports nothing but Node's built-ins (the author, 2026-11-17).
-- The registry is GitHub Container Registry. The image path `ghcr.io/<owner>/<repo>` must be lower case; the workflow reads the names from GitHub's own variables and lower-cases the path itself. A new package starts private, even from a public repository, and no API call changes that.
+- The registry is GitHub Container Registry. The image path `ghcr.io/<owner>/<repo>` must be lower case; the workflow reads the names from GitHub's own variables and lower-cases the path itself. The package was public from its first push by the `image` job (2026-11-17), against GitHub's documentation, which says a new package starts private. There is no manual switch (D-23).
 - `deploy`: `environment: prod` (it holds the secret; environments are free only on public repositories), a `concurrency` group without cancellation, plain `ssh` with the pinned host key and strict host key checking, `infra/deploy.sh` sent over SSH, then the smoke script against the public address.
 - Terraform checks are local only: `npm run verify:infra`.
 

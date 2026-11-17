@@ -72,7 +72,7 @@ A file outside the plan is not a question: name it in the done summary. Put a qu
 - You never read `~/.ssh` or `~/.aws`, key files, `.env` files or Terraform state files, and you never print a secret.
 - You never run `terraform apply` or `terraform destroy`, and never an `aws` command. You may run `terraform fmt` and `validate`, and `plan` after asking.
 - You never run `git push --force` or `git commit --no-verify`. `git push` asks every time; once the deploy job exists, a push to `main` is a deployment.
-- The author runs `aws login`, `ssh-keygen`, `terraform apply` and `destroy`, enters the secret and the variables in GitHub, and switches the registry package to public.
+- The author runs `aws login`, `ssh-keygen`, `terraform apply` and `destroy`, and enters the secret and the variables in GitHub.
 - You never change `.claude/settings.json` or a hook to get past a refusal. A refusal is a result: report it.
 
 ## Code rules
