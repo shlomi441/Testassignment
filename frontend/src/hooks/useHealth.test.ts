@@ -5,11 +5,23 @@ import { useHealth } from "./useHealth.ts";
 
 const answerOk = async () => Response.json({ status: "ok", uptime: 1 });
 
+const hangUntilAborted: typeof fetch = (_, init) =>
+  new Promise((_, reject) => {
+    const signal = init?.signal;
+    signal?.addEventListener("abort", () => reject(signal.reason));
+  });
+
 beforeEach(() => {
   vi.useFakeTimers();
+  // Node's AbortSignal.timeout runs on a timer the fake clock cannot move.
+  vi.spyOn(AbortSignal, "timeout").mockImplementation((ms) => {
+    const deadline = new AbortController();
+    setTimeout(() => deadline.abort(), ms);
+    return deadline.signal;
+  });
 });
 
-function stubFetch(answer: () => Promise<Response>) {
+function stubFetch(answer: typeof fetch) {
   const fetchMock = vi.fn<typeof fetch>(answer);
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -100,6 +112,26 @@ test('stays "down" while a poll after a failed first check waits for its answer'
 
   expect(fetchMock).toHaveBeenCalledTimes(2);
   expect(result.current).toBe("down");
+});
+
+test('is "down" when a check gets no answer within 5 seconds', async () => {
+  stubFetch(hangUntilAborted);
+  const result = renderUseHealth();
+
+  await advance(4_999);
+  expect(result.current).toBe("checking");
+  await advance(2);
+
+  expect(result.current).toBe("down");
+});
+
+test("asks again at the next poll after a check that got no answer", async () => {
+  const fetchMock = stubFetch(hangUntilAborted);
+  renderUseHealth();
+
+  await advance(15_000);
+
+  expect(fetchMock).toHaveBeenCalledTimes(2);
 });
 
 test("asks again every 10 seconds", async () => {

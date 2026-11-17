@@ -8,7 +8,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return body;
 }
 
-export const getHealth = () => request<Health>("/health");
+// Without a deadline, a check with no answer would hold every later poll,
+// and the badge would never show "down".
+export const getHealth = () =>
+  request<Health>("/health", { signal: AbortSignal.timeout(5_000) });
 
 export const getTasks = () => request<Task[]>("/tasks");
 

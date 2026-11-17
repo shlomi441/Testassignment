@@ -17,7 +17,9 @@ test("getHealth requests /health and returns the body", async () => {
   const fetchMock = stubFetch(Response.json({ status: "ok", uptime: 12 }));
 
   expect(await getHealth()).toEqual({ status: "ok", uptime: 12 });
-  expect(fetchMock).toHaveBeenCalledWith("/health", undefined);
+  expect(fetchMock).toHaveBeenCalledWith("/health", {
+    signal: expect.any(AbortSignal),
+  });
 });
 
 test("getTasks requests /tasks and returns the array", async () => {
