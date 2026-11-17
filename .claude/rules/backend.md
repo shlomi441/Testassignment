@@ -14,7 +14,7 @@ Exact versions in `package.json`, the lockfile committed, `npm ci` everywhere. A
 - Runtime (5): `@nestjs/common`, `@nestjs/core` and `@nestjs/platform-express` 12.4.2, `reflect-metadata` 0.2.2, `rxjs` 7.8.2. NestJS 12 brings Express 5.3.
 - Development (13): `typescript` 7.0.2, `@types/node` 24.19.2, `@types/express` 5.0.6, `jest` and `@jest/globals` 30.5.2, `@swc/core` 1.16.22, `@swc/jest` 0.2.39, `@nestjs/testing` 12.4.2, `supertest` 7.3.2, `@types/supertest` 7.2.1, `oxlint` 1.93.0, `oxlint-tsgolint` 7.0.2006, `prettier` 3.9.10.
 - Ask for `@types/node@24` explicitly. The default tag is the 26 line.
-- Node: 24.15.0 on the development machine and 24.22.2 in the image. The pipeline takes the newest 24.x, because `.nvmrc` names the major only. When the machine and the pipeline disagree, this gap is the first suspect.
+- Node: 24.15.0 on the development machine and 24.22.3 in the image. The pipeline takes the newest 24.x, because `.nvmrc` names the major only. When the machine and the pipeline disagree, this gap is the first suspect.
 - `@swc/core` is a native binary per platform. The lockfile has to install on Windows and on Linux. Never edit the lockfile by hand.
 
 Not used, each rejected for a recorded reason: the Nest CLI, `nest new` and `@nestjs/schematics` (they need TypeScript 6); `ts-jest` and `typescript-eslint` (they cannot load TypeScript 7); `babel-jest` (Jest 30 does not resolve against Babel 8); ESLint, Biome, `ts-node`, `class-validator`, `class-transformer`, `zod`, `@nestjs/serve-static`, `@nestjs/config`, `@nestjs/terminus`, `helmet`, `@nestjs/throttler`, `uuid`, `nanoid`, `pino`, `winston`, `morgan`, `dotenv`, `@types/jest`.

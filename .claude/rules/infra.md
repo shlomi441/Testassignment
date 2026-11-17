@@ -40,12 +40,14 @@ Checked against live sources on 2026-11-11. None of this had been run when it wa
 
 ## Dockerfile
 
-- Base image `node:24.22.2-trixie-slim`, pinned by tag and digest and named once in an `ARG`. Debian 13 with glibc. `24-slim` still means Debian 12, so the Debian 13 variant has to be named. Alpine (musl) is an experimental platform for Node.
-- Three stages at the repository root: build the backend, build the frontend, runtime. The runtime stage has `npm ci --omit=dev`, the backend's `dist/` and the frontend's build output as `public/`.
+- Base image `node:24.22.3-trixie-slim`, pinned by tag and index digest and named once in an `ARG`. 24.22.3 is a security release (CVE-2026-123864 on the HTTP/1 parser path), ruled by the author on 2026-11-17. Debian 13 with glibc. `24-slim` still means Debian 12, so the Debian 13 variant has to be named. Alpine (musl) is an experimental platform for Node.
+- Three stages at the repository root: build the backend, build the frontend, runtime. The runtime stage has `npm ci --omit=dev`, the backend's `dist/` and the frontend's build output as `public/`. Its `npm ci` runs under a BuildKit cache mount on `/root/.npm`, so npm's cache stays out of the image. Docker 29 builds with BuildKit by default; no `# syntax=` line.
+- The base image's `ENTRYPOINT` is `docker-entrypoint.sh`, which ends in `exec "$@"`. With the exec-form `CMD`, Node replaces it as process 1.
 - `ENV NODE_ENV=production`, `USER node`, `EXPOSE 3000`, and `CMD ["node", "dist/main.js"]` in exec form, so Node is process 1 and receives the stop signal itself.
 - No `HEALTHCHECK` and no init process.
-- `.dockerignore` is an allow-list: ignore everything, then re-include `backend/` and `frontend/` without their `node_modules`, `dist` and `coverage`. The image is public.
+- `.dockerignore` is an allow-list: ignore everything, then re-include `backend/` and `frontend/` without their `node_modules`, `dist`, `coverage` and `*.tsbuildinfo`. The image is public.
 - A graceful stop ends with exit code 0. A check after `docker stop` looks for "not 137".
+- Docker Desktop 4.80 (Engine 29.6.1) on the development machine gives every container a stop timeout of 1 second, not Docker's usual 10; the source was not found. The exec-form image stops in under half a second there.
 
 ## Pipeline
 
