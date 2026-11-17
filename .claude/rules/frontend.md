@@ -42,9 +42,9 @@ Not used: the `npm create vite` scaffold (the files are hand-written from the of
 - `src/queryClient.ts` exports the one function that creates the client with the defaults below. `main.tsx` and the test wrapper both call it, so the tests run on the production settings.
 - The hooks return the project's own types: `loading | error | ready` for tasks and `checking | up | down` for health.
 - Client defaults, set on purpose: `retry: false` and `networkMode: 'always'` for queries, `networkMode: 'always'` for mutations. The library's defaults would retry three times (the error would show about 7 seconds late) and would send nothing while the browser reports itself offline (the badge would stay "up").
-- Left at the library's defaults: refetch on window focus, and polling that pauses while the tab is hidden.
-- `useHealth` polls with `refetchInterval: 10_000`.
-- Creating a task is a `useMutation` that writes the returned task into the cache with `setQueryData`: one POST and no second GET. Mutations are not retried.
+- Left at the library's defaults: refetch on window focus, and polling that pauses while the tab is hidden. Under `networkMode: 'always'` the library also turns `refetchOnReconnect` off (`queryClient.js:689`), and it stays off: the list is not loaded again when the network comes back (a README limit).
+- `useHealth` polls with `refetchInterval: 10_000`. Its query function turns every outcome into `up` or `down` (`down` on any failure), so the health query never errors. `getHealth` passes `AbortSignal.timeout(5_000)`, because a check with no answer would otherwise hold every later poll. While the API hangs, checks start every 15 seconds: the deadline plus the interval.
+- Creating a task is a `useMutation`. Its `onSuccess` first waits for a `GET /tasks` in flight: `refetchQueries` with `fetchStatus: 'fetching'` and `cancelRefetch: false` joins that request and never starts one. Then, only when the list is in `success` and does not hold the task's id yet, it writes the returned task into the cache with `setQueryData`: one POST and no second GET. Mutations are not retried.
 - Two components that call the same hook share one request and one cached result.
 
 ## Tests
@@ -54,6 +54,7 @@ Not used: the `npm create vite` scaffold (the files are hand-written from the of
 - Replace `fetch` with `vi.stubGlobal` and real `Response` objects. Use `fireEvent`.
 - Every hook test gets a fresh client from `createQueryClient()` through a wrapper, so no cached data leaks between tests.
 - With fake timers: advance with `await act(() => vi.advanceTimersByTimeAsync(ms))` and wait with `vi.waitFor`. Testing Library's `waitFor` hangs under fake timers. TanStack Query delivers a state change through `setTimeout(cb, 0)`, and Vitest's fake clock schedules a zero-delay timer created during an advance at now + 1 ms. An advance that ends exactly when a fetch settles stops 1 ms short of the notification: advance 1 ms past that moment (`1_001`, `10_001`).
+- In Vitest's jsdom environment `AbortSignal` is Node's, and its `timeout` runs on a timer the fake clock cannot move. A test that needs the health deadline replaces it with `vi.spyOn(AbortSignal, 'timeout')` and an `AbortController` that a fake `setTimeout` aborts, as `useHealth.test.ts` does.
 - Tests are written first for the parts that hold logic: `api.ts`, the two hooks, the form's validation and the list's states. There is no coverage gate. Layout and CSS are checked by hand at desktop and mobile widths.
 
 ## Styles
