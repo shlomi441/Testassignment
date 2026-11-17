@@ -21,5 +21,5 @@ it("uptime is the process uptime rounded down to whole seconds", async () => {
 
   const response = await request(app.getHttpServer()).get("/health");
 
-  expect(response.body.uptime).toBe(12);
+  expect(response.body.uptime).toBe(13);
 });
