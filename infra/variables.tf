@@ -6,3 +6,8 @@ variable "region" {
 variable "public_key_path" {
   type = string
 }
+
+variable "enable_https" {
+  type    = bool
+  default = true
+}

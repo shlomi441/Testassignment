@@ -73,3 +73,10 @@ resource "aws_eip" "app" {
   instance = aws_instance.app.id
   domain   = "vpc"
 }
+
+resource "aws_apigatewayv2_api" "https" {
+  count         = var.enable_https ? 1 : 0
+  name          = "Testassignment"
+  protocol_type = "HTTP"
+  target        = "http://${aws_eip.app.public_dns}"
+}
