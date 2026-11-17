@@ -42,9 +42,14 @@ A lane changes only its own package folder. What a slice needs outside it (the r
 
 ## Stage close
 
-When this integration brings the last open slice of a stage to `main`, it is that stage's close: V1 for the backend, V2 for the frontend (the board tells you). Read the close's file, `spec/slices/V1.md` or `V2.md`, and do what it adds. Before you push, run the bundled code review over the commits that are not pushed yet: `/code-review` with no target reviews the commits ahead of the upstream branch. If you cannot start it yourself, ask the author to type `/code-review`.
+When this integration brings the last open slice of a stage to `main`, it is that stage's close: V1 for the backend, V2 for the frontend (the board tells you). Read the close's file, `spec/slices/V1.md` or `V2.md`, and do what it adds. Before you push, run the bundled code review. The first time, review the commits that are not pushed yet: `/code-review` with no target reviews the commits ahead of the upstream branch. A re-run after a fix reviews less (below). If you cannot start the review yourself, give the author the command to type. Then write `Reviewed up to: <hash of HEAD>` in `state/lead.md`, and keep that line whenever you rewrite the file.
 
-Wait for the findings and show all of them to the author. Change nothing on a finding's word. What the author wants fixed goes back to the lane as a small commit, or is fixed here when it is a lead-seat file, and then this skill runs again.
+Wait for the findings and show all of them to the author. Change nothing on a finding's word. What the author wants fixed goes back to the lane as a small commit, or is fixed here when it is a lead-seat file, and then this skill runs again and comes back to this section. When a fix changes behaviour that `.claude/rules/<package>.md` describes, update that file here in the same integration, before the re-review, as a lead's part: its red is a search that does not find the new fact, and its commit message is `<stage> wiring: <what the file now says>`.
+
+When the skill runs again after a fix, review only what the fix added. The commits before `Reviewed up to:` were reviewed, and the author has ruled on their findings. If the line is missing, ask the author which commit was reviewed last.
+- A fix that changes only Markdown files under `.claude/` gets the `reviewer` and no `/code-review`.
+- Any other fix gets `/code-review <Reviewed up to>..HEAD`, which reviews only the commits after that hash.
+- Afterwards, move `Reviewed up to:` to the new `HEAD`.
 
 ## Push
 
