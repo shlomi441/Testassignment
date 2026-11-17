@@ -14,9 +14,14 @@ export function useTasks() {
   });
   const { mutateAsync } = useMutation({
     mutationFn: createTask,
-    onSuccess: (task) => {
-      if (client.getQueryState(["tasks"])?.status === "success")
-        client.setQueryData<Task[]>(["tasks"], (tasks) => [...tasks!, task]);
+    onSuccess: async (task) => {
+      await client.refetchQueries(
+        { queryKey: ["tasks"], fetchStatus: "fetching" },
+        { cancelRefetch: false },
+      );
+      const { status, data } = client.getQueryState<Task[]>(["tasks"])!;
+      if (status === "success" && !data!.some(({ id }) => id === task.id))
+        client.setQueryData<Task[]>(["tasks"], [...data!, task]);
     },
   });
   const state: TasksState =

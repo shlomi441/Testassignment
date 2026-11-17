@@ -31,6 +31,9 @@ function renderUseTasks() {
 
 const settle = () => act(() => vi.advanceTimersByTimeAsync(0));
 
+const answerLater = (ms: number, response: Response) => () =>
+  new Promise<Response>((resolve) => setTimeout(() => resolve(response), ms));
+
 test('is "loading" before the first answer', () => {
   stubFetch();
 
@@ -155,25 +158,64 @@ test("an add after a failed reload keeps the error state", async () => {
   });
 });
 
-test("an add while the list is still loading resolves and leaves the list to the load", async () => {
-  stubFetch()
-    .mockImplementationOnce(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(() => resolve(Response.json([task])), 1_000),
-        ),
-    )
+test("an add while the list is still loading puts the task into the list once the load answers, without a second GET", async () => {
+  const fetchMock = stubFetch()
+    .mockImplementationOnce(answerLater(1_000, Response.json([task])))
     .mockResolvedValueOnce(Response.json(created, { status: 201 }));
   const result = renderUseTasks();
 
-  await expect(act(() => result.current.add("Ship it"))).resolves.toEqual(
-    created,
-  );
-  await settle();
-  expect(result.current.state).toEqual({ status: "loading" });
+  const added = result.current.add("Ship it");
   await act(() => vi.advanceTimersByTimeAsync(1_001));
 
-  expect(result.current.state).toEqual({ status: "ready", tasks: [task] });
+  await expect(added).resolves.toEqual(created);
+  expect(result.current.state).toEqual({
+    status: "ready",
+    tasks: [task, created],
+  });
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+});
+
+test("an add while a reload is in flight keeps the task when the reload answers", async () => {
+  const fetchMock = stubFetch()
+    .mockResolvedValueOnce(Response.json([task]))
+    .mockImplementationOnce(answerLater(1_000, Response.json([task])))
+    .mockResolvedValueOnce(Response.json(created, { status: 201 }));
+  const result = renderUseTasks();
+  await settle();
+  fireEvent(document, new Event("visibilitychange", { bubbles: true }));
+  await settle();
+
+  const added = result.current.add("Ship it");
+  await act(() => vi.advanceTimersByTimeAsync(1_001));
+
+  await expect(added).resolves.toEqual(created);
+  expect(result.current.state).toEqual({
+    status: "ready",
+    tasks: [task, created],
+  });
+  expect(fetchMock).toHaveBeenCalledTimes(3);
+});
+
+test("an add whose reload already answered with the task shows it once", async () => {
+  stubFetch()
+    .mockResolvedValueOnce(Response.json([task]))
+    .mockImplementationOnce(answerLater(1_000, Response.json([task, created])))
+    .mockImplementationOnce(
+      answerLater(2_000, Response.json(created, { status: 201 })),
+    );
+  const result = renderUseTasks();
+  await settle();
+  fireEvent(document, new Event("visibilitychange", { bubbles: true }));
+  await settle();
+
+  const added = result.current.add("Ship it");
+  await act(() => vi.advanceTimersByTimeAsync(2_001));
+
+  await expect(added).resolves.toEqual(created);
+  expect(result.current.state).toEqual({
+    status: "ready",
+    tasks: [task, created],
+  });
 });
 
 test("loads again when the tab regains focus, and shows the error state when that load fails", async () => {
