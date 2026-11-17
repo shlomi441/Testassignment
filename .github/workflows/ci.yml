@@ -21,3 +21,26 @@ jobs:
         working-directory: backend
       - run: npm audit --omit=dev --audit-level=high
         working-directory: frontend
+
+  image:
+    needs: verify
+    if: github.event_name == 'push'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}:$GITHUB_SHA" >> "$GITHUB_ENV"
+      - run: docker build -t "$IMAGE" .
+      - run: docker run -d --name tasks -p 3000:3000 "$IMAGE"
+      - run: npm run smoke -- http://localhost:3000
+        working-directory: backend
+      - run: |
+          docker stop tasks
+          test "$(docker inspect tasks --format '{{.State.ExitCode}}')" = 0
+      - run: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: docker push "$IMAGE"

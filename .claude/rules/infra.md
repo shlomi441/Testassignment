@@ -57,7 +57,7 @@ Checked against live sources on 2026-11-11. None of this had been run when it wa
 - The runner's own Node is 22, so `setup-node` reads the version from `.nvmrc`. The runner has Docker and no Terraform.
 - `permissions: contents: read` for the workflow; `packages: write` only in the `image` job.
 - `verify`: `npm run setup`, `npm run verify`, then `npm audit --omit=dev --audit-level=high` in both packages.
-- `image`: build, start the container on the runner, run the smoke script against it, stop it and check that it stopped on its own, log in with the built-in token, push with the commit SHA as the tag.
+- `image`: build, start the container on the runner, run the smoke script against it, stop it and check that it stopped on its own, log in with the built-in token, push with the commit SHA as the tag. The smoke script runs on the runner's own Node, without `setup-node`: it is only the HTTP client and imports nothing but Node's built-ins (the author, 2026-11-17).
 - The registry is GitHub Container Registry. The image path `ghcr.io/<owner>/<repo>` must be lower case; the workflow reads the names from GitHub's own variables and lower-cases the path itself. A new package starts private, even from a public repository, and no API call changes that.
 - `deploy`: `environment: prod` (it holds the secret; environments are free only on public repositories), a `concurrency` group without cancellation, plain `ssh` with the pinned host key and strict host key checking, `infra/deploy.sh` sent over SSH, then the smoke script against the public address.
 - Terraform checks are local only: `npm run verify:infra`.
