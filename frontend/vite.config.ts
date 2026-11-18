@@ -9,5 +9,9 @@ export default defineConfig({
       "/health": "http://localhost:3000",
     },
   },
-  test: { environment: "jsdom", setupFiles: ["src/test-setup.ts"] },
+  test: {
+    environment: "jsdom",
+    setupFiles: ["src/test-setup.ts"],
+    restoreMocks: true,
+  },
 });

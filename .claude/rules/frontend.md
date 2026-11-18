@@ -23,7 +23,7 @@ Not used: the `npm create vite` scaffold (the files are hand-written from the of
 - `tsconfig.json` only references `tsconfig.app.json` and `tsconfig.node.json`, as the official template has them.
 - `tsconfig.app.json`: `target` es2023; `lib` ES2023 and DOM; `module` esnext; `types` `["vite/client"]`; `moduleResolution` bundler; `allowImportingTsExtensions`; `verbatimModuleSyntax`; `moduleDetection` force; `noEmit`; `jsx` react-jsx; `noUnusedLocals`; `noUnusedParameters`; `erasableSyntaxOnly`; `noFallthroughCasesInSwitch`; `skipLibCheck`; `allowArbitraryExtensions`.
 - `tsconfig.node.json` covers `vite.config.ts` with `module` nodenext and `types` `["node"]`.
-- `vite.config.ts` imports `defineConfig` from `vitest/config`, uses the React plugin, forwards `/tasks` and `/health` to `http://localhost:3000` in the dev server, and sets `test: { environment: 'jsdom', setupFiles: ['src/test-setup.ts'] }`.
+- `vite.config.ts` imports `defineConfig` from `vitest/config`, uses the React plugin, forwards `/tasks` and `/health` to `http://localhost:3000` in the dev server, and sets `test: { environment: 'jsdom', setupFiles: ['src/test-setup.ts'], restoreMocks: true }`. `restoreMocks` restores every `vi.spyOn` spy before each test, so a test that fails halfway leaves no spy behind for the next one.
 - The page and the API share one origin. Every request URL is relative.
 - The build writes `dist/`: `index.html`, and one hashed JavaScript file and one hashed stylesheet under `assets/`. There is no favicon. The API's container serves that folder at `/`, so no file in the build output may be named `health` or `tasks`: those paths belong to the API.
 
