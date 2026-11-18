@@ -1,11 +1,6 @@
 import { expect, test, vi } from "vitest";
 import { createTask, getHealth, getTasks } from "./api.ts";
-
-const task = {
-  id: "1",
-  title: "Write tests",
-  createdAt: "2026-11-16T10:00:00.000Z",
-};
+import { task } from "./test-fixtures.ts";
 
 function stubFetch(response: Response) {
   const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(response);

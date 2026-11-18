@@ -1,18 +1,9 @@
 import { act, fireEvent, renderHook } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
+import { advance, created, task } from "../test-fixtures.ts";
 import { createWrapper } from "../test-wrapper.tsx";
 import { useTasks } from "./useTasks.ts";
 
-const task = {
-  id: "1",
-  title: "Write tests",
-  createdAt: "2026-11-16T10:00:00.000Z",
-};
-const created = {
-  id: "2",
-  title: "Ship it",
-  createdAt: "2026-11-16T10:05:00.000Z",
-};
 const networkFailure = new TypeError("Failed to fetch");
 
 beforeEach(() => {
@@ -29,8 +20,6 @@ function renderUseTasks() {
   return renderHook(useTasks, { wrapper: createWrapper() }).result;
 }
 
-const settle = () => act(() => vi.advanceTimersByTimeAsync(0));
-
 const answerLater = (ms: number, response: Response) => () =>
   new Promise<Response>((resolve) => setTimeout(() => resolve(response), ms));
 
@@ -44,7 +33,7 @@ test('is "ready" with the tasks after a 200', async () => {
   stubFetch().mockResolvedValueOnce(Response.json([task]));
   const result = renderUseTasks();
 
-  await settle();
+  await advance(0);
 
   expect(result.current.state).toEqual({ status: "ready", tasks: [task] });
 });
@@ -53,7 +42,7 @@ test('is "error" with the reason after a failed load, at once and without a seco
   const fetchMock = stubFetch().mockRejectedValueOnce(networkFailure);
   const result = renderUseTasks();
 
-  await settle();
+  await advance(0);
 
   expect(result.current.state).toEqual({
     status: "error",
@@ -67,10 +56,10 @@ test('reload loads again and becomes "ready"', async () => {
     .mockRejectedValueOnce(networkFailure)
     .mockResolvedValueOnce(Response.json([task]));
   const result = renderUseTasks();
-  await settle();
+  await advance(0);
 
   await act(() => result.current.reload());
-  await settle();
+  await advance(0);
 
   expect(result.current.state).toEqual({ status: "ready", tasks: [task] });
 });
@@ -80,10 +69,10 @@ test("add posts the title and puts the returned task into the list without a sec
     .mockResolvedValueOnce(Response.json([task]))
     .mockResolvedValueOnce(Response.json(created, { status: 201 }));
   const result = renderUseTasks();
-  await settle();
+  await advance(0);
 
   await act(() => result.current.add("Ship it"));
-  await settle();
+  await advance(0);
 
   expect(result.current.state).toEqual({
     status: "ready",
@@ -113,12 +102,12 @@ test("a failed add rejects with the API's message and leaves the list as it was"
       ),
     );
   const result = renderUseTasks();
-  await settle();
+  await advance(0);
 
   await expect(act(() => result.current.add(" "))).rejects.toThrow(
     new Error("title must not be empty"),
   );
-  await settle();
+  await advance(0);
 
   expect(result.current.state).toEqual({ status: "ready", tasks: [task] });
 });
@@ -128,10 +117,10 @@ test("an add while the load has failed keeps the error state", async () => {
     .mockRejectedValueOnce(networkFailure)
     .mockResolvedValueOnce(Response.json(created, { status: 201 }));
   const result = renderUseTasks();
-  await settle();
+  await advance(0);
 
   await act(() => result.current.add("Ship it"));
-  await settle();
+  await advance(0);
 
   expect(result.current.state).toEqual({
     status: "error",
@@ -145,12 +134,12 @@ test("an add after a failed reload keeps the error state", async () => {
     .mockRejectedValueOnce(networkFailure)
     .mockResolvedValueOnce(Response.json(created, { status: 201 }));
   const result = renderUseTasks();
-  await settle();
+  await advance(0);
   fireEvent(document, new Event("visibilitychange", { bubbles: true }));
-  await settle();
+  await advance(0);
 
   await act(() => result.current.add("Ship it"));
-  await settle();
+  await advance(0);
 
   expect(result.current.state).toEqual({
     status: "error",
@@ -165,7 +154,7 @@ test("an add while the list is still loading puts the task into the list once th
   const result = renderUseTasks();
 
   const added = result.current.add("Ship it");
-  await act(() => vi.advanceTimersByTimeAsync(1_001));
+  await advance(1_001);
 
   await expect(added).resolves.toEqual(created);
   expect(result.current.state).toEqual({
@@ -181,12 +170,12 @@ test("an add while a reload is in flight keeps the task when the reload answers"
     .mockImplementationOnce(answerLater(1_000, Response.json([task])))
     .mockResolvedValueOnce(Response.json(created, { status: 201 }));
   const result = renderUseTasks();
-  await settle();
+  await advance(0);
   fireEvent(document, new Event("visibilitychange", { bubbles: true }));
-  await settle();
+  await advance(0);
 
   const added = result.current.add("Ship it");
-  await act(() => vi.advanceTimersByTimeAsync(1_001));
+  await advance(1_001);
 
   await expect(added).resolves.toEqual(created);
   expect(result.current.state).toEqual({
@@ -204,12 +193,12 @@ test("an add whose reload already answered with the task shows it once", async (
       answerLater(2_000, Response.json(created, { status: 201 })),
     );
   const result = renderUseTasks();
-  await settle();
+  await advance(0);
   fireEvent(document, new Event("visibilitychange", { bubbles: true }));
-  await settle();
+  await advance(0);
 
   const added = result.current.add("Ship it");
-  await act(() => vi.advanceTimersByTimeAsync(2_001));
+  await advance(2_001);
 
   await expect(added).resolves.toEqual(created);
   expect(result.current.state).toEqual({
@@ -228,10 +217,10 @@ test("loads again when the tab regains focus, and shows the error state when tha
       ),
     );
   const result = renderUseTasks();
-  await settle();
+  await advance(0);
 
   fireEvent(document, new Event("visibilitychange", { bubbles: true }));
-  await settle();
+  await advance(0);
 
   expect(fetchMock).toHaveBeenCalledTimes(2);
   expect(result.current.state).toEqual({
@@ -243,11 +232,11 @@ test("loads again when the tab regains focus, and shows the error state when tha
 test("add posts even when the browser reports itself offline", async () => {
   const fetchMock = stubFetch().mockResolvedValueOnce(Response.json([task]));
   const result = renderUseTasks();
-  await settle();
+  await advance(0);
 
   fireEvent.offline(window);
   void result.current.add("Ship it");
-  await settle();
+  await advance(0);
 
   expect(fetchMock).toHaveBeenLastCalledWith(
     "/tasks",

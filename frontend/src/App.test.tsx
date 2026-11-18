@@ -1,18 +1,8 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
 import { App } from "./App.tsx";
+import { advance, created, task } from "./test-fixtures.ts";
 import { createWrapper } from "./test-wrapper.tsx";
-
-const task = {
-  id: "1",
-  title: "Write tests",
-  createdAt: "2026-11-16T10:00:00.000Z",
-};
-const created = {
-  id: "2",
-  title: "Ship it",
-  createdAt: "2026-11-16T10:05:00.000Z",
-};
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -28,14 +18,12 @@ function stubApi() {
   return fetchMock;
 }
 
-const settle = () => act(() => vi.advanceTimersByTimeAsync(0));
-
 const titles = () =>
   screen.queryAllByRole("listitem").map((item) => item.textContent);
 
 async function renderApp() {
   render(<App />, { wrapper: createWrapper() });
-  await settle();
+  await advance(0);
 }
 
 test("a user adds a task and sees it in the list without a reload", async () => {
@@ -47,7 +35,7 @@ test("a user adds a task and sees it in the list without a reload", async () => 
     target: { value: "Ship it" },
   });
   fireEvent.click(screen.getByRole("button", { name: "Add" }));
-  await settle();
+  await advance(0);
 
   expect(titles()).toEqual(["Ship it", "Write tests"]);
   const tasksRequests = fetchMock.mock.calls

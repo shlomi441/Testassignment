@@ -1,5 +1,6 @@
-import { act, fireEvent, renderHook } from "@testing-library/react";
+import { fireEvent, renderHook } from "@testing-library/react";
 import { beforeEach, expect, test, vi } from "vitest";
+import { advance } from "../test-fixtures.ts";
 import { createWrapper } from "../test-wrapper.tsx";
 import { useHealth } from "./useHealth.ts";
 
@@ -30,8 +31,6 @@ function stubFetch(answer: typeof fetch) {
 function renderUseHealth() {
   return renderHook(useHealth, { wrapper: createWrapper() }).result;
 }
-
-const advance = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
 
 function setVisibility(state: DocumentVisibilityState) {
   vi.spyOn(document, "visibilityState", "get").mockReturnValue(state);
