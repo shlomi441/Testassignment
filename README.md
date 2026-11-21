@@ -10,9 +10,10 @@ A small task service, built for a take-home assignment: a NestJS REST API with t
 - [How it is deployed](#how-it-is-deployed)
 - [Assumptions](#assumptions)
 - [Known limitations, and how I would complete them](#known-limitations-and-how-i-would-complete-them)
-- [If traffic grew 10x tomorrow](#if-traffic-grew-10x-tomorrow)
-- [Monitoring, error tracking and logs](#monitoring-error-tracking-and-logs)
-- [How I used AI](#how-i-used-ai)
+- [System Architecture](#system-architecture)
+  - [Scalability: if traffic grew 10x tomorrow](#scalability-if-traffic-grew-10x-tomorrow)
+  - [Observability: monitoring, error tracking and logs](#observability-monitoring-error-tracking-and-logs)
+  - [AI utilization: how I used AI](#ai-utilization-how-i-used-ai)
 - [Repository layout](#repository-layout)
 
 ## The API and the page
@@ -193,7 +194,7 @@ Where the assignment is unclear, I decided as follows.
 
 **Data and the API**
 
-- **The store is in memory.** Every restart and every deploy empties it, and the service can run as one instance only. This is the assignment's permitted simple option. The next step is a real database; see [If traffic grew 10x tomorrow](#if-traffic-grew-10x-tomorrow).
+- **The store is in memory.** Every restart and every deploy empties it, and the service can run as one instance only. This is the assignment's permitted simple option. The next step is a real database; see [If traffic grew 10x tomorrow](#scalability-if-traffic-grew-10x-tomorrow).
 - **The store keeps the newest 100 tasks, and there is no rate limiting.** The first place for rate limiting is API Gateway's throttling settings, since the gateway is already in front; a throttling module in the app is the alternative.
 - **Tasks can't be deleted or edited.** The assignment asks for three endpoints and a page that lists and creates tasks, and says the feature set is deliberately small, so I spent the time on depth instead. The next step would be `DELETE /tasks/:id` (204, or 404 for an unknown id) and a remove button that updates the list the same way the create does.
 - **`GET /health` reports liveness only.** There is no dependency to check while the store is in memory. With a database it would split into liveness and readiness.
@@ -218,11 +219,13 @@ Where the assignment is unclear, I decided as follows.
 
 **Logs and the page**
 
-- **Request logs stay on the instance,** in its system journal, and are lost with it. Nothing reports errors from the browser. See [Monitoring, error tracking and logs](#monitoring-error-tracking-and-logs).
+- **Request logs stay on the instance,** in its system journal, and are lost with it. Nothing reports errors from the browser. See [Monitoring, error tracking and logs](#observability-monitoring-error-tracking-and-logs).
 - **Frontend tests cover the parts that hold logic.** Layout and CSS are checked by hand at desktop and mobile widths.
 - **Two open tabs do not see each other's tasks** until a tab regains focus.
 
-## If traffic grew 10x tomorrow
+## System Architecture
+
+### Scalability: if traffic grew 10x tomorrow
 
 The design starts from an in-memory store, so all state lives inside one process. That decides the order:
 
@@ -233,7 +236,7 @@ The design starts from an in-memory store, so all state lives inside one process
 5. **Retries in the browser.** They are off today, so a failure is visible at once; the Retry button and the 10-second health check are the retries. Behind a load balancer with several instances, where failures become transient, I would turn on one or two automatic retries for GET requests, and never for POST without an idempotency key.
 6. **Infrastructure for a team:** Terraform's state in a shared backend with locking, and an explicit VPC in code.
 
-## Monitoring, error tracking and logs
+### Observability: monitoring, error tracking and logs
 
 **What exists today.** Every request produces one JSON line through the framework's own logger, written when the response closes:
 
@@ -251,7 +254,7 @@ On the instance, Docker's `journald` log driver writes these lines into the syst
 
 **Error tracking.** Today nothing reports errors from the browser, and the API's errors exist only as log lines. An error-tracking service would cover both.
 
-## How I used AI
+### AI utilization: how I used AI
 
 **Planning.** Before any project code, I worked through the assignment with Claude in four chat sessions. Together we kept a numbered decision log, designed the backend, the frontend, the hosting, the pipeline and the infrastructure, and planned how the build would run. Most of my toolchain (TypeScript 7, NestJS 12, Jest 30, Vite 8, Vitest 5) is newer than the AI's training data. So I required every fact to be checked against a live source before it was used: before each recommendation, the AI read the vendors' own pages that day and read tool versions from the npm registry and Git tags.
 
@@ -281,7 +284,7 @@ Each stage (backend, frontend, DevOps) closed with Claude Code's bundled code re
 
 **What only I do.** I run `aws login`, `ssh-keygen`, `terraform apply` and `destroy`, and I enter the secret and the variables in GitHub. I read the code in VS Code, with no AI features in the editor.
 
-### Three corrections
+#### Three corrections
 
 **TypeScript 7.** The AI recommended pinning TypeScript 6.0, because the usual Jest transformer (`ts-jest`) and the usual linter (`typescript-eslint`) cannot load TypeScript 7. I pushed back: use the current compiler and change the surrounding tools instead. The research then confirmed a workable TypeScript 7 toolchain (SWC for Jest, V8 coverage, oxlint), and the AI withdrew its recommendation. That toolchain is what this repository uses.
 
